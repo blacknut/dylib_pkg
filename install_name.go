@@ -5,15 +5,6 @@ import (
 	"os/exec"
 )
 
-func installNameChangeLib(lib *dylib) error {
-	for _, dep := range lib.deps {
-		if err := installNameChange(lib.path, dep); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func installNameChange(path string, lib *dylib) error {
 	newPath := fmt.Sprintf("@executable_path/%s", lib.name)
 
