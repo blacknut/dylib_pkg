@@ -148,8 +148,12 @@ func (h *harvester) fixReferences() error {
 
 	// fixes libs
 	for _, lib := range h.libs {
-		if err := installNameChange(h.destLibPath(lib), lib); err != nil {
-			return err
+		destLib := h.destLibPath(lib)
+
+		for _, dep := range lib.deps {
+			if err := installNameChange(destLib, dep); err != nil {
+				return err
+			}
 		}
 	}
 
