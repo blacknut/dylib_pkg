@@ -14,6 +14,11 @@ func installNameChange(path string, lib *dylib) error {
 
 	// fmt.Println("install_name_tool", "-change", lib.path, newPath, path)
 
+	if flagNoop {
+		// dry run
+		return nil
+	}
+
 	// install_name_tool -change $dylib @executable_path/`basename $dylib` ./ga-client
 	if out, err := exec.Command("install_name_tool", "-change", lib.path, newPath, path).CombinedOutput(); err != nil {
 		fmt.Println("Failed to fix lib:", path, string(out))

@@ -15,13 +15,15 @@ var (
 	flagVerbose bool
 	flagDest    string
 	flagForce   bool
+	flagNoop    bool
 )
 
 func init() {
 	flag.BoolVar(&flagVersion, "version", false, "Display version")
 	flag.BoolVar(&flagVerbose, "verbose", false, "Display verbose infos")
 	flag.StringVar(&flagDest, "dest", "", "Destination directory path (default: in the same dir as executable))")
-	flag.BoolVar(&flagForce, "force", false, "Overwrite dylib files")
+	flag.BoolVar(&flagForce, "force", false, "Overwrite dylib files in destination directory")
+	flag.BoolVar(&flagNoop, "noop", false, "Dry run")
 
 	flag.Usage = func() {
 		fmt.Println("Usage: $ dylib_pkg /path/to/executable")
@@ -63,9 +65,7 @@ func main() {
 
 	if flagVerbose {
 		fmt.Printf("Found %d libs:\n", len(h.libs))
-		for _, l := range h.libs {
-			fmt.Println("  ", l.path)
-		}
+		h.print()
 	}
 
 	if err := h.copy(); err != nil {

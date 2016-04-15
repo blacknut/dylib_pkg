@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var oToolIgnorePrefixes = []string{"/System", "/usr/lib", "@"}
+var oToolIgnorePrefixes = []string{"/System", "/usr/lib"}
 
 func oToolExec(filePath string) ([]byte, error) {
 	return exec.Command("otool", "-L", filePath).CombinedOutput()

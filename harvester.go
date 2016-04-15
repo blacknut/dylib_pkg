@@ -12,7 +12,7 @@ type harvester struct {
 	root string
 
 	// executable dependencies names
-	deps map[string]bool
+	deps map[string]*dylib
 
 	// all libs
 	libs map[string]*dylib
@@ -24,7 +24,7 @@ type harvester struct {
 func newHarvester(root string) *harvester {
 	return &harvester{
 		root:     root,
-		deps:     make(map[string]bool),
+		deps:     make(map[string]*dylib),
 		libs:     make(map[string]*dylib),
 		libStack: []*dylib{},
 	}
@@ -60,7 +60,9 @@ func (h *harvester) collectFile(path string, isRoot bool) error {
 		}
 
 		// root dependencies
-		h.deps[lib.name] = true
+		if isRoot {
+			h.deps[lib.name] = lib
+		}
 
 		if h.libs[lib.name] == nil {
 			// all libs
@@ -75,10 +77,26 @@ func (h *harvester) collectFile(path string, isRoot bool) error {
 	return nil
 }
 
+func (h *harvester) print() {
+	fmt.Println(">", h.root)
+
+	for _, lib := range h.deps {
+		fmt.Println("    ", lib.path)
+	}
+
+	for _, lib := range h.libs {
+		fmt.Println(">", lib.path)
+
+		for _, dep := range lib.deps {
+			fmt.Println("    ", dep.path)
+		}
+	}
+}
+
 func (h *harvester) collectLib(lib *dylib) error {
 	h.pushLib(lib)
 
-	if err := h.collectFile(lib.path, false); err != nil {
+	if err := h.collectFile(lib.absolutePath(path.Dir(h.root)), false); err != nil {
 		return err
 	}
 
@@ -118,6 +136,10 @@ func (h *harvester) destDir() string {
 
 func (h *harvester) copy() error {
 	for _, lib := range h.libs {
+		if lib.isExecutablePath() {
+			continue
+		}
+
 		dest := h.destLibPath(lib)
 
 		if _, err := os.Stat(dest); !os.IsNotExist(err) {
@@ -140,8 +162,12 @@ func (h *harvester) destLibPath(lib *dylib) string {
 
 func (h *harvester) fixReferences() error {
 	// fixes executable
-	for name := range h.deps {
-		if err := installNameChange(h.root, h.libs[name]); err != nil {
+	for _, lib := range h.deps {
+		if lib.isExecutablePath() {
+			continue
+		}
+
+		if err := installNameChange(h.root, lib); err != nil {
 			return err
 		}
 	}
@@ -151,6 +177,10 @@ func (h *harvester) fixReferences() error {
 		destLib := h.destLibPath(lib)
 
 		for _, dep := range lib.deps {
+			if dep.isExecutablePath() {
+				continue
+			}
+
 			if err := installNameChange(destLib, dep); err != nil {
 				return err
 			}
@@ -163,6 +193,11 @@ func (h *harvester) fixReferences() error {
 func copyFile(from string, to string) error {
 	if flagVerbose {
 		fmt.Printf("Copying: %s => %s\n", from, to)
+	}
+
+	if flagNoop {
+		// dry run
+		return nil
 	}
 
 	// open source file
