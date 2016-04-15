@@ -31,3 +31,4 @@ Get more help with:
 ## References
 
 - <http://stackoverflow.com/a/11585225>
+- <http://thecourtsofchaos.com/2013/09/16/how-to-copy-and-relink-binaries-on-osx/>
