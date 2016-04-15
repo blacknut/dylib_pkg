@@ -1,6 +1,6 @@
 # dylib_pkg
 
-Package your dynamic libraries on MacOS.
+Package dynamic libraries on MacOS.
 
 Developed by [Blacknut](http://www.blacknut.com).
 
